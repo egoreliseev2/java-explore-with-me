@@ -13,7 +13,7 @@ import java.util.List;
 
 @Repository
 public interface StatsRepository extends JpaRepository<EndpointHit, Long> {
-    @Query("select new model.ViewStats(hit.app, hit.uri, count(distinct hit.ip)) " +
+    @Query("select new ewm.model.ViewStats(hit.app, hit.uri, count(distinct hit.ip)) " +
             "from EndpointHit hit " +
             "where hit.timestamp >= :start " +
             "and hit.timestamp <= :end " +
@@ -24,7 +24,7 @@ public interface StatsRepository extends JpaRepository<EndpointHit, Long> {
                                    @Param("end") LocalDateTime end,
                                    @Param("uris") List<String> uris);
 
-    @Query("select new model.ViewStats(hit.app, hit.uri, count(hit.ip)) " +
+    @Query("select new ewm.model.ViewStats(hit.app, hit.uri, count(hit.ip)) " +
             "from EndpointHit hit " +
             "where hit.timestamp >= :start " +
             "and hit.timestamp <= :end " +
