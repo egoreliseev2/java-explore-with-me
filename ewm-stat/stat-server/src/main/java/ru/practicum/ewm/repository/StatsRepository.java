@@ -1,7 +1,7 @@
-package ewm.repository;
+package ru.practicum.ewm.repository;
 
-import ewm.model.EndpointHit;
-import ewm.model.ViewStats;
+import ru.practicum.ewm.model.EndpointHit;
+import ru.practicum.ewm.model.ViewStats;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

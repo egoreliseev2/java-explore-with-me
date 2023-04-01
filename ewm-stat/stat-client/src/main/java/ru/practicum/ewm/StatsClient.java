@@ -1,6 +1,6 @@
-package ewm;
+package ru.practicum.ewm;
 
-import dto.EndpointHitDto;
+import ru.practicum.ewm.dto.EndpointHitDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

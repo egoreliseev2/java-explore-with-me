@@ -1,10 +1,10 @@
-package ewm.mapper;
+package ru.practicum.ewm.mapper;
 
 
-import dto.EndpointHitDto;
-import dto.ViewStatsDto;
-import ewm.model.EndpointHit;
-import ewm.model.ViewStats;
+import ru.practicum.ewm.dto.EndpointHitDto;
+import ru.practicum.ewm.dto.ViewStatsDto;
+import ru.practicum.ewm.model.EndpointHit;
+import ru.practicum.ewm.model.ViewStats;
 
 public class StatsMapper {
     public static EndpointHitDto toEndpointHitDto(EndpointHit endpointHit) {

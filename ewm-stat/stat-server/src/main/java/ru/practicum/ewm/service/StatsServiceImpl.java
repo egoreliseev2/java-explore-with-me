@@ -1,14 +1,14 @@
-package ewm.service;
+package ru.practicum.ewm.service;
 
-import dto.EndpointHitDto;
-import dto.ViewStatsDto;
+import ru.practicum.ewm.dto.EndpointHitDto;
+import ru.practicum.ewm.dto.ViewStatsDto;
 import lombok.RequiredArgsConstructor;
-import ewm.mapper.StatsMapper;
-import ewm.model.EndpointHit;
+import ru.practicum.ewm.mapper.StatsMapper;
+import ru.practicum.ewm.model.EndpointHit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ewm.repository.StatsRepository;
+import ru.practicum.ewm.repository.StatsRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
