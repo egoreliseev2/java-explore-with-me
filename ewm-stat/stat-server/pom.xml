@@ -76,7 +76,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ru.practicum.ru.practicum.ewm.StatServer</mainClass>
+                    <mainClass>ru.practicum.ewm.StatServer</mainClass>
                     <layout>JAR</layout>
                 </configuration>
             </plugin>
