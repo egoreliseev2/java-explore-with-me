@@ -34,7 +34,12 @@ public class StatsServiceImpl implements StatsService {
                                        List<String> uris,
                                        Boolean unique) {
         if (uris == null || uris.isEmpty()) {
-            return Collections.emptyList();
+            if(unique) {
+                return statsRepository.getHitsUniqueIp(start,end).stream().map(StatsMapper::toViewStatsDto)
+                        .collect(Collectors.toList());
+            }
+            return statsRepository.getHits(start,end).stream().map(StatsMapper::toViewStatsDto)
+                    .collect(Collectors.toList());
         }
         if (unique) {
             return statsRepository.getStatsUnique(start, end, uris).stream()
