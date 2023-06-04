@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.repository.StatsRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +33,7 @@ public class StatsServiceImpl implements StatsService {
                                        List<String> uris,
                                        Boolean unique) {
         if (uris == null || uris.isEmpty()) {
-            if(unique) {
+            if (unique) {
                 return statsRepository.getHitsUniqueIp(start,end).stream().map(StatsMapper::toViewStatsDto)
                         .collect(Collectors.toList());
             }
