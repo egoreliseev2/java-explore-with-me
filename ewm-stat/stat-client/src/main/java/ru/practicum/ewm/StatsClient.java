@@ -2,6 +2,7 @@ package ru.practicum.ewm;
 
 import ru.practicum.ewm.dto.EndpointHitDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class StatsClient {
