@@ -1,42 +1,41 @@
 package ru.practicum.ewm.user.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.user.dto.NewUserRequest;
 import ru.practicum.ewm.user.dto.UserDto;
-import ru.practicum.ewm.user.service.AdminUserService;
+import ru.practicum.ewm.user.service.UserService;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.Min;
 import java.util.List;
 
-@Validated
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/admin/users")
+@RequiredArgsConstructor
+@Validated
 public class AdminUserController {
-    private final AdminUserService adminUserService;
 
-    @GetMapping
-    public List<UserDto> findAll(@RequestParam(required = false) List<Long> ids,
-                                 @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
-                                 @Positive @RequestParam(defaultValue = "10") Integer size) {
-        PageRequest page = PageRequest.of(from / size, size);
-        return adminUserService.findAll(ids, page);
-    }
+    private final UserService userService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto create(@Valid @RequestBody UserDto userDto) {
-        return adminUserService.create(userDto);
+    public UserDto createUser(@RequestBody @Valid NewUserRequest newUserRequest) {
+        return userService.createUser(newUserRequest);
+    }
+
+    @GetMapping
+    public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
+                                  @RequestParam(defaultValue = "0") @Min(0) Integer from,
+                                  @RequestParam(defaultValue = "10") @Min(1) Integer size) {
+        return userService.getUsers(ids, from, size);
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable long userId) {
-        adminUserService.delete(userId);
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
     }
 }
