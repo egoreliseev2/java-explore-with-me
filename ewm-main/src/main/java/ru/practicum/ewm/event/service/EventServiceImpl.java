@@ -14,7 +14,7 @@ import ru.practicum.ewm.event.dao.EventRepository;
 import ru.practicum.ewm.event.dto.*;
 import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventState;
-import ru.practicum.event.model.QEvent;
+import ru.practicum.ewm.event.model.QEvent;
 import ru.practicum.ewm.event.model.StateAction;
 import ru.practicum.ewm.StatsClient;
 import ru.practicum.ewm.exceptions.BadRequestException;
