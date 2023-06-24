@@ -19,6 +19,7 @@ import javax.validation.constraints.Positive;
 public class AdminCategoryController {
 
     private final CategoryService categoryService;
+    private final String path = "/{catId}";
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
@@ -27,12 +28,12 @@ public class AdminCategoryController {
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/{catId}")
+    @DeleteMapping(path)
     public void deleteCategoryById(@PathVariable("catId") @Positive Long catId) {
         categoryService.deleteCategoryById(catId);
     }
 
-    @PatchMapping("/{catId}")
+    @PatchMapping(path)
     public CategoryDto updateCategoryById(@PathVariable("catId") @Positive Long categoryId,
                                           @Validated({Update.class}) @RequestBody NewCategoryDto newCategoryDto) {
         return categoryService.updateCategoryById(categoryId, newCategoryDto);

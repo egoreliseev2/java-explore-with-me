@@ -22,13 +22,13 @@ import static ru.practicum.ewm.category.CategoryMapper.toCategoryDto;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
 
     @Override
-    @Transactional
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
         Category category = toCategory(newCategoryDto);
 
@@ -36,7 +36,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional
     public void deleteCategoryById(Long catId) {
         categoryRepository.findById(catId).orElseThrow(() -> {
             throw new ObjectNotFoundException(String.format("Category with id=%s was not found", catId));
@@ -50,7 +49,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional
     public CategoryDto updateCategoryById(Long catId, NewCategoryDto newCategoryDto) {
         Category category = categoryRepository.findById(catId).orElseThrow(() -> {
             throw new ObjectNotFoundException(String.format("Category with id=%s was not found", catId));

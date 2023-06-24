@@ -18,6 +18,7 @@ import javax.validation.Valid;
 public class AdminCompilationController {
 
     private final CompilationService compilationService;
+    private final String path = "/{compId}";
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -25,13 +26,13 @@ public class AdminCompilationController {
         return compilationService.createCompilation(newCompilationDto);
     }
 
-    @DeleteMapping("/{compId}")
+    @DeleteMapping(path)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCompilation(@PathVariable("compId") Long compId) {
         compilationService.deleteCompilation(compId);
     }
 
-    @PatchMapping("/{compId}")
+    @PatchMapping(path)
     public CompilationDto updateCompilation(@PathVariable("compId") Long compId,
                                             @RequestBody @Valid UpdateCompilationRequest updateCompilationRequest) {
         return compilationService.updateCompilation(compId, updateCompilationRequest);

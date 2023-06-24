@@ -20,6 +20,7 @@ import java.util.List;
 public class PrivateEventController {
 
     private final EventService eventService;
+    private final String path = "/{eventId}";
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -35,13 +36,13 @@ public class PrivateEventController {
         return eventService.getUserEvents(userId, from, size);
     }
 
-    @GetMapping("/{eventId}")
+    @GetMapping(path)
     public EventFullDto getUserEventById(@PathVariable("userId") Long userId,
                                          @PathVariable("eventId") Long eventId) {
         return eventService.getUserEventByEventId(userId, eventId);
     }
 
-    @PatchMapping("/{eventId}")
+    @PatchMapping(path)
     public EventFullDto updateEventByEventId(@PathVariable("userId") Long userId,
                                              @PathVariable("eventId") Long eventId,
                                              @RequestBody UpdateEventRequest updateEventRequest) {
