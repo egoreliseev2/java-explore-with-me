@@ -34,12 +34,14 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
+    private final String userMessage = "User with id=%s was not found";
+    private final String eventMessage = "Event with id=%s was not found";
 
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getRequestsById(Long userId) {
         userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         List<Request> requests = requestRepository.findByRequesterId(userId);
 
@@ -52,10 +54,10 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         User user = userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Event event = eventRepository.findById(eventId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         Request requestExist = requestRepository.findOneByEventIdAndRequesterId(eventId, userId);
 
@@ -97,7 +99,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
         User user = userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Request request = requestRepository.findById(requestId).orElseThrow(
                 () -> new ObjectNotFoundException(String.format("Request with id=%s was not found", requestId)));
@@ -133,7 +135,7 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
 
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         if (event.getParticipants().size() >= event.getParticipantLimit()) {
             throw new ConflictException("The participant limit has been reached");

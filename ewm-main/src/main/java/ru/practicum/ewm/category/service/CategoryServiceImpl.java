@@ -27,6 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
+    private final String categoryMessage = "Category with id=%s was not found";
 
     @Override
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
@@ -38,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategoryById(Long catId) {
         categoryRepository.findById(catId).orElseThrow(() -> {
-            throw new ObjectNotFoundException(String.format("Category with id=%s was not found", catId));
+            throw new ObjectNotFoundException(String.format(categoryMessage, catId));
         });
 
         if (!eventRepository.findAllByCategoryId(catId).isEmpty()) {
@@ -51,7 +52,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto updateCategoryById(Long catId, NewCategoryDto newCategoryDto) {
         Category category = categoryRepository.findById(catId).orElseThrow(() -> {
-            throw new ObjectNotFoundException(String.format("Category with id=%s was not found", catId));
+            throw new ObjectNotFoundException(String.format(categoryMessage, catId));
         });
 
         category.setName(newCategoryDto.getName());
@@ -74,7 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto getCategoryById(Long catId) {
 
         Category category = categoryRepository.findById(catId).orElseThrow(() -> {
-            throw new ObjectNotFoundException(String.format("Category with id=%s was not found", catId));
+            throw new ObjectNotFoundException(String.format(categoryMessage, catId));
         });
 
         return toCategoryDto(category);
