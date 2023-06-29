@@ -1,41 +1,34 @@
 package ru.practicum.ewm.controller;
 
-import ru.practicum.ewm.dto.EndpointHitDto;
-import ru.practicum.ewm.dto.ViewStatsDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.service.StatsService;
+import ru.practicum.ewm.Create;
+import ru.practicum.ewm.dto.EndPointHitDto;
+import ru.practicum.ewm.dto.ViewStatDto;
+import ru.practicum.ewm.service.EndpointHitService;
 
-import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
-@Validated
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@RequiredArgsConstructor
 public class StatsController {
-    private final StatsService statsService;
 
-    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final EndpointHitService endpointHitService;
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public EndpointHitDto create(@Valid @RequestBody EndpointHitDto endpointHitDto) {
-        return statsService.create(endpointHitDto);
+    public EndPointHitDto create(@RequestBody @Validated({Create.class}) EndPointHitDto endPointHitDto) {
+
+        return endpointHitService.create(endPointHitDto);
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> getStats(@RequestParam String start,
-                                       @RequestParam String end,
-                                       @RequestParam(required = false) List<String> uris,
-                                       @RequestParam(defaultValue = "false") Boolean unique) {
-        return statsService.getStats(LocalDateTime.parse(start, FORMATTER),
-                LocalDateTime.parse(end, FORMATTER),
-                uris,
-                unique);
+    public List<ViewStatDto> getStats(@RequestParam(value = "start", required = false) String start,
+                                      @RequestParam(value = "end", required = false) String end,
+                                      @RequestParam(value = "uris", defaultValue = "") List<String> uris,
+                                      @RequestParam(value = "unique", defaultValue = "false") Boolean unique) {
+        return endpointHitService.getStats(start, end, uris, unique);
     }
 }
