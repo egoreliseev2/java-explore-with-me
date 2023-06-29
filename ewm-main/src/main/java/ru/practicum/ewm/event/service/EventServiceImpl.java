@@ -23,6 +23,8 @@ import ru.practicum.ewm.exceptions.ObjectNotFoundException;
 import ru.practicum.ewm.location.dao.LocationRepository;
 import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.location.model.Location;
+import ru.practicum.ewm.rating.dao.RatingRepository;
+import ru.practicum.ewm.rating.model.Rating;
 import ru.practicum.ewm.user.dao.UserRepository;
 import ru.practicum.ewm.user.model.User;
 
@@ -40,6 +42,7 @@ import static ru.practicum.ewm.category.CategoryMapper.toCategoryDto;
 import static ru.practicum.ewm.event.EventMapper.*;
 import static ru.practicum.ewm.location.LocationMapper.toLocation;
 import static ru.practicum.ewm.location.LocationMapper.toLocationDto;
+import static ru.practicum.ewm.user.RatingScore.calculate;
 import static ru.practicum.ewm.user.UserMapper.toUserShortDto;
 
 @Service
@@ -50,6 +53,7 @@ public class EventServiceImpl implements EventService {
     private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final RatingRepository ratingRepository;
     private final StatsClient statsClient;
 
     @Override
@@ -221,6 +225,14 @@ public class EventServiceImpl implements EventService {
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
         result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
+        if (Objects.equals(sort, EventSortType.EVENT_RATE)) {
+            sortEventsByRate(result);
+        }
+
+        if (Objects.equals(sort, EventSortType.USER_RATE)) {
+            sortEventsByUserRating(result);
+        }
+
         createHit(request);
 
         Map<Long, Integer> hits = new HashMap<>();
@@ -236,6 +248,16 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventShortDtos;
+    }
+
+    private void sortEventsByRate(List<Event> result) {
+        result.sort((a, b) -> calculate(b.getRatings())
+                .compareTo(calculate(a.getRatings())));
+    }
+
+    private void sortEventsByUserRating(List<Event> result) {
+        result.sort((a, b) -> calculate(b.getInitiator().getRatings())
+                .compareTo(calculate(a.getInitiator().getRatings())));
     }
 
     @Override
@@ -327,6 +349,42 @@ public class EventServiceImpl implements EventService {
                 toCategoryDto(updatedEvent.getCategory()),
                 toUserShortDto(updatedEvent.getInitiator()),
                 toLocationDto(updatedEvent.getLocation()));
+    }
+
+    @Override
+    @Transactional
+    public void addRating(Long userId, Long eventId, Boolean isPositive) {
+        userRepository.findById(userId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+
+        if (userId.equals(event.getInitiator().getId())) {
+            throw new ConflictException(String.format("User with id=%s is initiator of event with id=%s",
+                    userId, eventId));
+        }
+
+        Rating rating = Rating.builder()
+                .userId(userId)
+                .eventId(eventId)
+                .isPositive(isPositive)
+                .initiatorId(event.getInitiator().getId())
+                .build();
+
+        ratingRepository.save(rating);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRating(Long userId, Long eventId) {
+        userRepository.findById(userId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+
+        eventRepository.findById(eventId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+
+        ratingRepository.deleteByUserIdAndEventId(userId, eventId);
     }
 
     private void createHit(HttpServletRequest request) {
