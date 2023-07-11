@@ -23,6 +23,8 @@ import ru.practicum.ewm.exceptions.ObjectNotFoundException;
 import ru.practicum.ewm.location.dao.LocationRepository;
 import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.location.model.Location;
+import ru.practicum.ewm.rating.dao.RatingRepository;
+import ru.practicum.ewm.rating.model.Rating;
 import ru.practicum.ewm.user.dao.UserRepository;
 import ru.practicum.ewm.user.model.User;
 
@@ -40,6 +42,7 @@ import static ru.practicum.ewm.category.CategoryMapper.toCategoryDto;
 import static ru.practicum.ewm.event.EventMapper.*;
 import static ru.practicum.ewm.location.LocationMapper.toLocation;
 import static ru.practicum.ewm.location.LocationMapper.toLocationDto;
+import static ru.practicum.ewm.user.RatingScore.calculate;
 import static ru.practicum.ewm.user.UserMapper.toUserShortDto;
 
 @Service
@@ -47,9 +50,12 @@ import static ru.practicum.ewm.user.UserMapper.toUserShortDto;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final String userMessage = "User with id=%s was not found";
+    private final String eventMessage = "Event with id=%s was not found";
     private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final RatingRepository ratingRepository;
     private final StatsClient statsClient;
 
     @Override
@@ -59,7 +65,7 @@ public class EventServiceImpl implements EventService {
         validateEventDate(newEventDto.getEventDate());
 
         User user = userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Location location = getLocationOrAddNew(newEventDto.getLocation());
 
@@ -80,7 +86,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getUserEvents(Long userId, Integer from, Integer size) {
         userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Pageable pageable = PageRequest.of(from, size);
 
@@ -98,10 +104,10 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public EventFullDto getUserEventByEventId(Long userId, Long eventId) {
         userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         Map<Long, Integer> hits = getStatsFromEvents(List.of(event));
 
@@ -118,10 +124,10 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateEventByEventId(Long userId, Long eventId, UpdateEventRequest updateEventRequest) {
         userRepository.findById(userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
 
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         if (!Objects.equals(event.getInitiator().getId(), userId)) {
             throw new ConflictException(
@@ -221,6 +227,14 @@ public class EventServiceImpl implements EventService {
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
         result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
+        if (Objects.equals(sort, EventSortType.EVENT_RATE)) {
+            sortEventsByRate(result);
+        }
+
+        if (Objects.equals(sort, EventSortType.USER_RATE)) {
+            sortEventsByUserRating(result);
+        }
+
         createHit(request);
 
         Map<Long, Integer> hits = new HashMap<>();
@@ -238,12 +252,22 @@ public class EventServiceImpl implements EventService {
         return eventShortDtos;
     }
 
+    private void sortEventsByRate(List<Event> result) {
+        result.sort((a, b) -> calculate(b.getRatings())
+                .compareTo(calculate(a.getRatings())));
+    }
+
+    private void sortEventsByUserRating(List<Event> result) {
+        result.sort((a, b) -> calculate(b.getInitiator().getRatings())
+                .compareTo(calculate(a.getInitiator().getRatings())));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getPublicEventById(Long eventId, HttpServletRequest request) {
 
         Event event = eventRepository.findByIdAndPublished(eventId).orElseThrow(() ->
-                new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         EventFullDto eventFullDto = toEventFullDto(event,
                 toCategoryDto(event.getCategory()),
@@ -295,7 +319,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventFullDto updateEventAdmin(Long eventId, UpdateEventRequest updateEventRequest) {
         Event event = eventRepository.findById(eventId).orElseThrow(
-                () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
 
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Only pending or canceled events can be changed");
@@ -327,6 +351,42 @@ public class EventServiceImpl implements EventService {
                 toCategoryDto(updatedEvent.getCategory()),
                 toUserShortDto(updatedEvent.getInitiator()),
                 toLocationDto(updatedEvent.getLocation()));
+    }
+
+    @Override
+    @Transactional
+    public void addRating(Long userId, Long eventId, Boolean isPositive) {
+        userRepository.findById(userId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
+
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
+
+        if (userId.equals(event.getInitiator().getId())) {
+            throw new ConflictException(String.format("User with id=%s is initiator of event with id=%s",
+                    userId, eventId));
+        }
+
+        Rating rating = Rating.builder()
+                .userId(userId)
+                .eventId(eventId)
+                .isPositive(isPositive)
+                .initiatorId(event.getInitiator().getId())
+                .build();
+
+        ratingRepository.save(rating);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRating(Long userId, Long eventId) {
+        userRepository.findById(userId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format(userMessage, userId)));
+
+        eventRepository.findById(eventId).orElseThrow(
+                () -> new ObjectNotFoundException(String.format(eventMessage, eventId)));
+
+        ratingRepository.deleteByUserIdAndEventId(userId, eventId);
     }
 
     private void createHit(HttpServletRequest request) {

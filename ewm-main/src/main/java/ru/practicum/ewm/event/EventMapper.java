@@ -10,17 +10,19 @@ import ru.practicum.ewm.event.model.Event;
 import ru.practicum.ewm.event.model.EventState;
 import ru.practicum.ewm.location.dto.LocationDto;
 import ru.practicum.ewm.location.model.Location;
+import ru.practicum.ewm.user.RatingScore;
 import ru.practicum.ewm.user.dto.UserShortDto;
 import ru.practicum.ewm.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 @UtilityClass
 public class EventMapper {
     public static EventShortDto toEventShortDto(Event event, CategoryDto categoryDto, UserShortDto initiator) {
-        return EventShortDto.builder()
+        EventShortDto eventShortDto = EventShortDto.builder()
                 .id(event.getId())
                 .category(categoryDto)
                 .annotation(event.getAnnotation())
@@ -30,6 +32,13 @@ public class EventMapper {
                 .paid(event.getPaid())
                 .title(event.getTitle())
                 .build();
+
+        if (Objects.isNull(event.getRatings())) {
+            eventShortDto.setRating(0);
+        } else {
+            eventShortDto.setRating(RatingScore.calculate(event.getRatings()));
+        }
+        return eventShortDto;
     }
 
     public static EventFullDto toEventFullDto(Event event,

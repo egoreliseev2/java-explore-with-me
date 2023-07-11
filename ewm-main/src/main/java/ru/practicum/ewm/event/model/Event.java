@@ -7,6 +7,7 @@ import org.hibernate.annotations.WhereJoinTable;
 import ru.practicum.ewm.category.model.Category;
 import ru.practicum.ewm.location.model.Location;
 import ru.practicum.ewm.user.model.User;
+import ru.practicum.ewm.rating.model.Rating;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -75,4 +76,8 @@ public class Event {
     @JoinTable(name = "requests", joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "requester_id"))
     Set<User> participants = new HashSet<>();
+
+    @OneToMany
+    @JoinColumn(name = "event_id")
+    Set<Rating> ratings;
 }
